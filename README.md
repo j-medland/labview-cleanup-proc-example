@@ -8,7 +8,7 @@ The code imports the `RTSetCleanupProc` function exported by the LabVIEW IDE/Run
 
 The code is only written for compilation on windows with MSVC. If you want a more complete example of cross-platform then see https://gitlab.com/serenial/basler-camera-toolkit-for-labview
 
-The code also show using data log references as handles. Note, because refnums are only 32-bit in size we need to implement a global lookup between refnums and object pointers to support 64-bit usage. I would probably just use raw pointer sized integers and wrap them in an LVClass.
+The code also shows using data log references as handles. Note, because refnums are only 32-bit in size we need to implement a global lookup between refnums and object pointers to support 64-bit usage. I would probably just use raw pointer sized integers and wrap them in an LVClass.
 
 # Building 
 

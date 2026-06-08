@@ -110,6 +110,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 //
 /**********************************************************************************************************/
 
+#include <unordered_map>
+
+class MyObject;
+
+// create a place to store object pointers that will work on 64-bit systems
+// no cross thread protection provided! use a shared-mutex in real life
+
+// we could just clean up the whole unordered_map when exiting but having
+// each object clean itself up is more fun!
+static std::unordered_map <LV_MagicCookie_t, MyObject*> object_map; 
+static LV_MagicCookie_t next_handle = 1;
+
 class MyObject
 {
 private:
@@ -144,11 +156,12 @@ public:
 extern "C"
 {
 
-    __declspec(dllexport) LV_MgErr_t example_create_object(int32_t value, MyObject **object)
+    __declspec(dllexport) LV_MgErr_t example_create_object(int32_t value, LV_MagicCookie_t* key)
     {
         try
         {
-            *object = new MyObject(value);
+            *key = next_handle++;
+            object_map.insert(std::make_pair(*key, new MyObject(value)));
             return LV_ERR_noError;
         }
         catch (...)
@@ -157,12 +170,16 @@ extern "C"
         }
     }
 
-    __declspec(dllexport) LV_MgErr_t explicitly_destroy_object(MyObject **object)
+    __declspec(dllexport) LV_MgErr_t explicitly_destroy_object(LV_MagicCookie_t* key)
     {
         try
         {
-            delete *object;
-            *object = nullptr; // only for comfort, doesn't really provide much safety.
+            auto it = object_map.find(*key);
+
+            if(it != object_map.end()){
+                delete it->second;
+                object_map.erase(*key); 
+            }
 
             return LV_ERR_noError;
         }
